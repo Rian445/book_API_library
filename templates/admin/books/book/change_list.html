@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+        <a href="{% url 'admin:books_book_add_from_api' %}" class="addlink">
+            Add Book from API
+        </a>
+    </li>
+{% endblock %}

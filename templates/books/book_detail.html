@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ book.title }} - Rian'sBook Collection{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'books:home' %}">Home</a></li>
+        <li class="breadcrumb-item active">{{ book.title|truncatechars:50 }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Book Cover -->
+    <div class="col-md-4 mb-4">
+        {% if book.cover_image %}
+            <img src="{{ book.cover_image }}" class="book-detail-cover" alt="{{ book.title }}">
+        {% else %}
+            <div class="book-cover-placeholder book-detail-cover">
+                <i class="fas fa-book fa-4x"></i>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Book Information -->
+    <div class="col-md-8">
+        <div class="book-detail-info">
+            <h1 class="mb-3">{{ book.title }}</h1>
+            
+            <div class="detail-label">Authors:</div>
+            <div class="detail-value">
+                {% for author in book.authors.all %}
+                    <a href="{% url 'books:author_books' author.id %}" class="btn btn-outline-primary btn-sm me-2 mb-2">
+                        <i class="fas fa-user"></i> {{ author.name }}
+                    </a>
+                {% empty %}
+                    <span class="text-muted">Unknown Author</span>
+                {% endfor %}
+            </div>
+            
+            {% if book.publication_year %}
+                <div class="detail-label">Publication Year:</div>
+                <div class="detail-value">
+                    <i class="fas fa-calendar"></i> {{ book.publication_year }}
+                </div>
+            {% endif %}
+            
+            {% if book.isbn %}
+                <div class="detail-label">ISBN:</div>
+                <div class="detail-value">
+                    <code>{{ book.isbn }}</code>
+                </div>
+            {% endif %}
+            
+            {% if book.description %}
+                <div class="detail-label">Description:</div>
+                <div class="detail-value">
+                    {{ book.description|linebreaks }}
+                </div>
+            {% endif %}
+            
+            <div class="detail-label">Added to Collection:</div>
+            <div class="detail-value">
+                <i class="fas fa-clock"></i> {{ book.created_at|date:"F d, Y" }}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-4">
+                <a href="{% url 'books:home' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Collection
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Author Details Section -->
+{% if book.authors.all %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3><i class="fas fa-users"></i> About the Authors</h3>
+            <div class="row">
+                {% for author in book.authors.all %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="{% url 'books:author_books' author.id %}" class="text-decoration-none">
+                                        {{ author.name }}
+                                    </a>
+                                </h5>
+                                
+                                {% if author.birth_date %}
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-birthday-cake"></i> Born: {{ author.birth_date }}
+                                    </p>
+                                {% endif %}
+                                
+                                {% if author.bio %}
+                                    <p class="card-text">{{ author.bio|truncatewords:30 }}</p>
+                                {% endif %}
+                                
+                                <a href="{% url 'books:author_books' author.id %}" class="btn btn-sm btn-outline-primary">
+                                    View All Books by {{ author.name|truncatewords:2 }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Related Books -->
+{% if related_books %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3><i class="fas fa-book"></i> More Books by These Authors</h3>
+            <div class="row">
+                {% for related_book in related_books %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <div class="card book-card h-100">
+                            <a href="{% url 'books:book_detail' related_book.id %}">
+                                {% if related_book.cover_image %}
+                                    <img src="{{ related_book.cover_image }}" class="book-cover" alt="{{ related_book.title }}">
+                                {% else %}
+                                    <div class="book-cover-placeholder">
+                                        <i class="fas fa-book"></i>
+                                    </div>
+                                {% endif %}
+                            </a>
+                            
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a href="{% url 'books:book_detail' related_book.id %}" class="book-title">
+                                        {{ related_book.title|truncatechars:40 }}
+                                    </a>
+                                </h6>
+                                
+                                {% if related_book.publication_year %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ related_book.publication_year }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

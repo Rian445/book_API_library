@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}Add Book from Open Library API{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:books_book_changelist' %}">Books</a>
+    &rsaquo; Add from API
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Add Book from Open Library API</h1>
+
+<div class="module aligned">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div>
+                <label for="book_title" class="required">Book Title:</label>
+                <input type="text" name="book_title" id="book_title" class="vTextField" required 
+                       placeholder="Enter the exact book title" style="width: 400px;">
+                <p class="help">Enter the exact title of the book you want to add. The system will search Open Library API and automatically fetch book details including cover image, author information, and publication year.</p>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="Search and Add Book" class="default" />
+            <a href="{% url 'admin:books_book_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="module">
+    <h2>How it works:</h2>
+    <ul>
+        <li>Enter the exact title of the book you want to add</li>
+        <li>The system will search the Open Library API for matching books</li>
+        <li>If found, the book will be automatically added with:</li>
+        <ul>
+            <li>Book title and cover image</li>
+            <li>Author information</li>
+            <li>Publication year</li>
+            <li>ISBN (if available)</li>
+        </ul>
+        <li>Authors will be automatically created if they don't exist</li>
+        <li>You'll be redirected to edit the book details if needed</li>
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block extrahead %}
+<style>
+    .module {
+        margin-bottom: 20px;
+    }
+    .help {
+        color: #666;
+        font-size: 11px;
+        margin-top: 5px;
+    }
+    .cancel-link {
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}

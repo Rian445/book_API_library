@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Authors - Book Collection{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1><i class="fas fa-users"></i> Browse Authors</h1>
+    <p>Explore books by your favorite authors</p>
+</div>
+
+<!-- Search Section -->
+<div class="search-section">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h3><i class="fas fa-search"></i> Find an Author</h3>
+            <p class="mb-0">Search by author name</p>
+        </div>
+        <div class="col-md-4">
+            <form method="GET" class="search-form">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Search authors..." 
+                           value="{{ request.GET.search }}">
+                    <button class="btn btn-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if authors %}
+    <div class="row">
+        {% for author in authors %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card author-card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-user-circle fa-4x"></i>
+                        </div>
+                        
+                        <h5 class="card-title">
+                            <a href="{% url 'books:author_books' author.id %}" class="author-name">
+                                {{ author.name }}
+                            </a>
+                        </h5>
+                        
+                        {% if author.birth_date %}
+                            <p class="card-text">
+                                <i class="fas fa-birthday-cake"></i> Born: {{ author.birth_date }}
+                            </p>
+                        {% endif %}
+                        
+                        <p class="card-text">
+                            <i class="fas fa-book"></i> 
+                            {{ author.books.count }} book{{ author.books.count|pluralize }} in collection
+                        </p>
+                        
+                        {% if author.bio %}
+                            <p class="card-text small">
+                                {{ author.bio|truncatewords:15 }}
+                            </p>
+                        {% endif %}
+                        
+                        <a href="{% url 'books:author_books' author.id %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-right"></i> View Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav aria-label="Authors pagination">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="no-results">
+        <i class="fas fa-users"></i>
+        <h3>No Authors Found</h3>
+        {% if request.GET.search %}
+            <p>No authors found matching "{{ request.GET.search }}". Try a different search term.</p>
+            <a href="{% url 'books:authors' %}" class="btn btn-primary">View All Authors</a>
+        {% else %}
+            <p>There are no authors in the collection yet. Please check back later!</p>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
