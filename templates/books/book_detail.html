@@ -1,77 +1,82 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ book.title }} - Rian'sBook Collection{% endblock %}
+{% block title %}{{ book.title }} - Rian's Library{% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'books:home' %}">Home</a></li>
-        <li class="breadcrumb-item active">{{ book.title|truncatechars:50 }}</li>
-    </ol>
-</nav>
+<!-- Back Button -->
+<div style="margin-bottom: 2rem;">
+    <a href="{% url 'books:home' %}" class="back-btn">← Back to Books</a>
+</div>
 
-<div class="row">
+<!-- Book Information -->
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 3rem;">
     <!-- Book Cover -->
-    <div class="col-md-4 mb-4">
+    <div>
         {% if book.cover_image %}
-            <img src="{{ book.cover_image }}" class="book-detail-cover" alt="{{ book.title }}">
+            <img src="{{ book.cover_image }}" style="width: 100%; max-width: 300px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);" alt="{{ book.title }}">
         {% else %}
-            <div class="book-cover-placeholder book-detail-cover">
-                <i class="fas fa-book fa-4x"></i>
+            <div style="
+                width: 100%;
+                max-width: 300px;
+                height: 400px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 3rem;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            ">
+                📚
             </div>
         {% endif %}
     </div>
-    
-    <!-- Book Information -->
-    <div class="col-md-8">
-        <div class="book-detail-info">
-            <h1 class="mb-3">{{ book.title }}</h1>
-            
-            <div class="detail-label">Authors:</div>
-            <div class="detail-value">
+
+    <!-- Book Details -->
+    <div>
+        <h1 style="color: #2c3e50; margin-bottom: 1.5rem;">{{ book.title }}</h1>
+
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #667eea;">👤 Authors:</strong>
+            <div style="margin-top: 0.5rem;">
                 {% for author in book.authors.all %}
-                    <a href="{% url 'books:author_books' author.id %}" class="btn btn-outline-primary btn-sm me-2 mb-2">
-                        <i class="fas fa-user"></i> {{ author.name }}
+                    <a href="{% url 'books:author_books' author.id %}" class="nav-btn" style="margin-right: 0.5rem; margin-bottom: 0.5rem; display: inline-block;">
+                        {{ author.name }}
                     </a>
                 {% empty %}
-                    <span class="text-muted">Unknown Author</span>
+                    <span style="color: #7f8c8d;">Unknown Author</span>
                 {% endfor %}
             </div>
-            
-            {% if book.publication_year %}
-                <div class="detail-label">Publication Year:</div>
-                <div class="detail-value">
-                    <i class="fas fa-calendar"></i> {{ book.publication_year }}
-                </div>
-            {% endif %}
-            
-            {% if book.isbn %}
-                <div class="detail-label">ISBN:</div>
-                <div class="detail-value">
-                    <code>{{ book.isbn }}</code>
-                </div>
-            {% endif %}
-            
-            {% if book.description %}
-                <div class="detail-label">Description:</div>
-                <div class="detail-value">
+        </div>
+
+        {% if book.publication_year %}
+            <div style="margin-bottom: 1rem;">
+                <strong style="color: #667eea;">📅 Publication Year:</strong>
+                <span style="color: #2c3e50;">{{ book.publication_year }}</span>
+            </div>
+        {% endif %}
+
+        {% if book.isbn %}
+            <div style="margin-bottom: 1rem;">
+                <strong style="color: #667eea;">📖 ISBN:</strong>
+                <code style="background: #f8f9fa; padding: 0.2rem 0.5rem; border-radius: 5px;">{{ book.isbn }}</code>
+            </div>
+        {% endif %}
+
+        {% if book.description %}
+            <div style="margin-bottom: 1rem;">
+                <strong style="color: #667eea;">📝 Description:</strong>
+                <div style="margin-top: 0.5rem; color: #2c3e50; line-height: 1.6;">
                     {{ book.description|linebreaks }}
                 </div>
-            {% endif %}
-            
-            <div class="detail-label">Added to Collection:</div>
-            <div class="detail-value">
-                <i class="fas fa-clock"></i> {{ book.created_at|date:"F d, Y" }}
             </div>
-            
-            <!-- Action Buttons -->
-            <div class="mt-4">
-                <a href="{% url 'books:home' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Collection
-                </a>
-            </div>
+        {% endif %}
+
+        <div style="margin-bottom: 1rem;">
+            <strong style="color: #667eea;">⏰ Added to Collection:</strong>
+            <span style="color: #2c3e50;">{{ book.created_at|date:"F d, Y" }}</span>
         </div>
     </div>
 </div>
@@ -153,4 +158,117 @@
         </div>
     </div>
 {% endif %}
+
+<!-- Comments Section -->
+<div style="margin-top: 3rem;">
+    <h3 style="color: #2c3e50; margin-bottom: 2rem;">💬 Comments ({{ comments.count }})</h3>
+
+    <!-- Comment Form (Only for logged-in users) -->
+    {% if user.is_authenticated %}
+        <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+            <h4 style="color: #667eea; margin-bottom: 1rem;">✍️ Add Your Comment</h4>
+            <form method="post">
+                {% csrf_token %}
+                <div style="margin-bottom: 1rem;">
+                    {{ comment_form.content }}
+                </div>
+                <button type="submit" style="
+                    background: linear-gradient(45deg, #667eea, #764ba2);
+                    color: white;
+                    border: none;
+                    padding: 0.8rem 2rem;
+                    border-radius: 25px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    💬 Post Comment
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div style="background: #f8f9fa; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; text-align: center;">
+            <p style="color: #7f8c8d; margin-bottom: 1rem;">Want to share your thoughts about this book?</p>
+            <a href="{% url 'books:login' %}?next={{ request.path }}" class="nav-btn">🔑 Login to Comment</a>
+            <span style="margin: 0 1rem; color: #7f8c8d;">or</span>
+            <a href="{% url 'books:register' %}" class="nav-btn">📝 Register</a>
+        </div>
+    {% endif %}
+
+    <!-- Comments List -->
+    {% if comments %}
+        <div style="space-y: 1.5rem;">
+            {% for comment in comments %}
+                <div style="background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: linear-gradient(45deg, #667eea, #764ba2);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: 600;
+                            margin-right: 1rem;
+                        ">
+                            {{ comment.user.first_name.0|default:comment.user.username.0|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #2c3e50;">
+                                {{ comment.user.first_name|default:comment.user.username }}
+                                {% if comment.user.is_staff %}
+                                    <span style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.8rem; margin-left: 0.5rem;">
+                                        👑 Admin
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div style="color: #7f8c8d; font-size: 0.9rem;">
+                                {{ comment.created_at|date:"F d, Y \a\t g:i A" }}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="color: #2c3e50; line-height: 1.6;">
+                        {{ comment.content|linebreaks }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; color: #7f8c8d;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">💭</div>
+            <h4>No comments yet</h4>
+            <p>Be the first to share your thoughts about this book!</p>
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<style>
+.form-control {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+@media (max-width: 768px) {
+    .main-content > div:first-child {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+}
+</style>
+{% endblock %}
 {% endblock %}

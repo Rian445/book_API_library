@@ -1,9 +1,13 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from rest_framework import generics
-from .models import Book, Author
+from .models import Book, Author, Comment
 from .serializers import BookSerializer
+from .forms import CustomUserCreationForm, LoginForm, CommentForm
 
 
 def home(request):
@@ -38,9 +42,27 @@ def book_detail(request, book_id):
         authors__in=book.authors.all()
     ).exclude(id=book.id).distinct()[:4]
 
+    comments = Comment.objects.filter(book=book).select_related('user')
+
+    comment_form = None
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.book = book
+                comment.user = request.user
+                comment.save()
+                messages.success(request, 'Your comment has been added!')
+                return redirect('books:book_detail', book_id=book.id)
+        else:
+            comment_form = CommentForm()
+
     context = {
         'book': book,
         'related_books': related_books,
+        'comments': comments,
+        'comment_form': comment_form,
     }
 
     return render(request, 'books/book_detail.html', context)
@@ -117,3 +139,49 @@ def search(request):
 class BookListAPIView(generics.ListAPIView):
     queryset = Book.objects.all().prefetch_related('authors')
     serializer_class = BookSerializer
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('books:home')
+
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}! You can now log in.')
+            return redirect('books:login')
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'books/register.html', {'form': form})
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('books:home')
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.first_name or user.username}!')
+                next_url = request.GET.get('next', 'books:home')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Invalid username or password.')
+    else:
+        form = LoginForm()
+
+    return render(request, 'books/login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('books:home')

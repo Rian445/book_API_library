@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.urls import path
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from .models import Book, Author
+from .models import Book, Author, Comment
 from .utils import search_and_create_book, OpenLibraryAPI
 
 
@@ -58,8 +58,20 @@ class BookAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'book', 'content_preview', 'created_at')
+    list_filter = ('created_at', 'book')
+    search_fields = ('user__username', 'user__first_name', 'book__title', 'content')
+    readonly_fields = ('created_at', 'updated_at')
+
+    def content_preview(self, obj):
+        return obj.content[:50] + "..." if len(obj.content) > 50 else obj.content
+    content_preview.short_description = 'Comment Preview'
+
+
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Book, BookAdmin)
+admin.site.register(Comment, CommentAdmin)
 
 admin.site.site_header = "Book Collection Admin"
 admin.site.site_title = "Book Collection"
