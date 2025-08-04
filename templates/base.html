@@ -24,9 +24,24 @@
     <nav class="navbar">
         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
             <div>
-                <a href="{% url 'books:home' %}" class="nav-btn {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                    🏠 Home
-                </a>
+                {% if user.is_authenticated %}
+                    {% if user.is_staff %}
+                        <a href="{% url 'books:admin_dashboard' %}" class="nav-btn {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                            👑 Dashboard
+                        </a>
+                    {% else %}
+                        <a href="{% url 'books:user_dashboard' %}" class="nav-btn {% if request.resolver_match.url_name == 'user_dashboard' %}active{% endif %}">
+                            🏠 Dashboard
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'books:all_books' %}" class="nav-btn {% if request.resolver_match.url_name == 'all_books' %}active{% endif %}">
+                        📚 All Books
+                    </a>
+                {% else %}
+                    <a href="{% url 'books:home' %}" class="nav-btn {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        🏠 Home
+                    </a>
+                {% endif %}
                 <a href="{% url 'books:authors' %}" class="nav-btn {% if request.resolver_match.url_name == 'authors' %}active{% endif %}">
                     👥 Authors
                 </a>

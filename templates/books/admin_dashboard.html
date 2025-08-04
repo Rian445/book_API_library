@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Rian's Library{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div style="text-align: center; margin-bottom: 3rem;">
+    <div class="lottie-container">
+        <lottie-player 
+            src="{% static 'animations/ok.json' %}" 
+            background="transparent" 
+            speed="1" 
+            class="lottie-animation" 
+            loop 
+            autoplay>
+        </lottie-player>
+    </div>
+    <h2>👑 Admin Dashboard</h2>
+    <p style="color: #667eea; font-size: 1.1rem;">Welcome, {{ user.first_name|default:user.username }}! Manage your library</p>
+</div>
+
+<!-- Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+    <div class="stat-card">
+        <div class="stat-icon">📚</div>
+        <div class="stat-number">{{ total_books }}</div>
+        <div class="stat-label">Total Books</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number">{{ total_authors }}</div>
+        <div class="stat-label">Authors</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">👤</div>
+        <div class="stat-number">{{ total_users }}</div>
+        <div class="stat-label">Registered Users</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-number">{{ total_comments }}</div>
+        <div class="stat-label">Comments</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h3 style="color: #2c3e50; margin-bottom: 1.5rem;">🚀 Quick Actions</h3>
+    <a href="/admin/" class="nav-btn" style="margin: 0.5rem;">🔧 Django Admin</a>
+    <a href="{% url 'books:all_books' %}" class="nav-btn" style="margin: 0.5rem;">📚 View All Books</a>
+    <a href="{% url 'books:authors' %}" class="nav-btn" style="margin: 0.5rem;">👥 View Authors</a>
+</div>
+
+<!-- Recent Activity -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Recent Books -->
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+        <h3 style="color: #2c3e50; margin-bottom: 1.5rem;">📚 Recent Books</h3>
+        {% if recent_books %}
+            {% for book in recent_books %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: #2c3e50;">{{ book.title|truncatechars:40 }}</div>
+                        <div style="color: #7f8c8d; font-size: 0.9rem;">
+                            {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                    <div style="color: #667eea; font-size: 0.8rem;">
+                        {{ book.created_at|date:"M d" }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #7f8c8d; text-align: center;">No recent books</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Comments -->
+    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+        <h3 style="color: #2c3e50; margin-bottom: 1.5rem;">💬 Recent Comments</h3>
+        {% if recent_comments %}
+            {% for comment in recent_comments %}
+                <div style="padding: 1rem; border-bottom: 1px solid #eee;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <div style="font-weight: 600; color: #2c3e50;">{{ comment.user.first_name|default:comment.user.username }}</div>
+                        <div style="color: #667eea; font-size: 0.8rem;">{{ comment.created_at|date:"M d" }}</div>
+                    </div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                        on "{{ comment.book.title|truncatechars:30 }}"
+                    </div>
+                    <div style="color: #2c3e50; font-size: 0.9rem;">
+                        {{ comment.content|truncatechars:60 }}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #7f8c8d; text-align: center;">No recent comments</p>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+.stat-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #667eea;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .main-content > div:last-child {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}
+{% endblock %}

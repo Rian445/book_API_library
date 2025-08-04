@@ -78,6 +78,29 @@
             <strong style="color: #667eea;">⏰ Added to Collection:</strong>
             <span style="color: #2c3e50;">{{ book.created_at|date:"F d, Y" }}</span>
         </div>
+
+        <!-- Favorite Button (Only for regular authenticated users, not admins) -->
+        {% if user.is_authenticated and not user.is_staff %}
+            <div style="margin-top: 2rem;">
+                <a href="{% url 'books:toggle_favorite' book.id %}" style="
+                    background: {% if is_favorite %}linear-gradient(45deg, #e74c3c, #c0392b){% else %}linear-gradient(45deg, #27ae60, #2ecc71){% endif %};
+                    color: white;
+                    border: none;
+                    padding: 1rem 2rem;
+                    border-radius: 25px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    display: inline-block;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    {% if is_favorite %}
+                        💔 Remove from Favorites
+                    {% else %}
+                        ❤️ Add to Favorites
+                    {% endif %}
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
 

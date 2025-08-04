@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Books - Rian's Library{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div style="margin-bottom: 2rem;">
+    {% if user.is_authenticated %}
+        {% if user.is_staff %}
+            <a href="{% url 'books:admin_dashboard' %}" class="back-btn">← Back to Admin Dashboard</a>
+        {% else %}
+            <a href="{% url 'books:user_dashboard' %}" class="back-btn">← Back to Dashboard</a>
+        {% endif %}
+    {% else %}
+        <a href="{% url 'books:home' %}" class="back-btn">← Back to Home</a>
+    {% endif %}
+</div>
+
+<h2>📚 All Books ({{ total_books }})</h2>
+
+{% if books %}
+    <div class="book-grid">
+        {% for book in books %}
+            <div class="book-card" onclick="location.href='{% url 'books:book_detail' book.id %}'">
+                <h3>{{ book.title|truncatechars:50 }}</h3>
+                <div class="author">
+                    👤 {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+                {% if book.publication_year %}
+                    <div class="year">📅 {{ book.publication_year }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div style="text-align: center; margin-top: 2rem;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="nav-btn">← Previous</a>
+            {% endif %}
+            
+            <span style="margin: 0 1rem; color: #2c3e50; font-weight: 600;">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="nav-btn">Next →</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="no-results">
+        <h3>📚 No Books Available</h3>
+        <p>The library is empty. Check back later!</p>
+    </div>
+{% endif %}
+{% endblock %}

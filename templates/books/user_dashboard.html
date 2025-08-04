@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Rian's Library{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div style="text-align: center; margin-bottom: 3rem;">
+    <div class="lottie-container">
+        <lottie-player 
+            src="{% static 'animations/good.json' %}" 
+            background="transparent" 
+            speed="1" 
+            class="lottie-animation" 
+            loop 
+            autoplay>
+        </lottie-player>
+    </div>
+    <h2>👋 Welcome back, {{ user.first_name|default:user.username }}!</h2>
+    <p style="color: #667eea; font-size: 1.1rem;">Your personal book collection awaits</p>
+</div>
+
+<!-- Tab Navigation -->
+<div style="text-align: center; margin-bottom: 2rem;">
+    <button class="tab-btn active" onclick="showTab('favorites')" id="favoritesTab">
+        ❤️ My Favorites ({{ total_favorites }})
+    </button>
+    <button class="tab-btn" onclick="showTab('allbooks')" id="allbooksTab">
+        📚 All Books ({{ total_books }})
+    </button>
+</div>
+
+<!-- Favorites Tab -->
+<div id="favorites" class="tab-content active">
+    <h3 style="color: #2c3e50; margin-bottom: 2rem; text-align: center;">❤️ Your Favorite Books</h3>
+    
+    {% if favorite_books %}
+        <div class="book-grid">
+            {% for book in favorite_books %}
+                <div class="book-card" onclick="location.href='{% url 'books:book_detail' book.id %}'">
+                    <div style="position: relative;">
+                        <h3>{{ book.title|truncatechars:50 }}</h3>
+                        <div style="position: absolute; top: 0; right: 0; color: #e74c3c; font-size: 1.2rem;">❤️</div>
+                    </div>
+                    <div class="author">
+                        👤 {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </div>
+                    {% if book.publication_year %}
+                        <div class="year">📅 {{ book.publication_year }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-results">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">💔</div>
+            <h3>No Favorite Books Yet</h3>
+            <p>Start building your collection by adding books to your favorites!</p>
+            <button class="nav-btn" onclick="showTab('allbooks')">📚 Browse All Books</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- All Books Tab -->
+<div id="allbooks" class="tab-content">
+    <h3 style="color: #2c3e50; margin-bottom: 2rem; text-align: center;">📚 All Books in Library</h3>
+    
+    {% if all_books %}
+        <div class="book-grid">
+            {% for book in all_books %}
+                <div class="book-card" onclick="location.href='{% url 'books:book_detail' book.id %}'">
+                    <h3>{{ book.title|truncatechars:50 }}</h3>
+                    <div class="author">
+                        👤 {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </div>
+                    {% if book.publication_year %}
+                        <div class="year">📅 {{ book.publication_year }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination for All Books -->
+        {% if is_paginated %}
+            <div style="text-align: center; margin-top: 2rem;">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="nav-btn">← Previous</a>
+                {% endif %}
+                
+                <span style="margin: 0 1rem; color: #2c3e50; font-weight: 600;">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="nav-btn">Next →</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="no-results">
+            <h3>📚 No Books Available</h3>
+            <p>The library is empty. Check back later!</p>
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<style>
+.tab-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    margin: 0 0.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(45deg, #764ba2, #667eea);
+}
+
+.tab-btn.active {
+    background: linear-gradient(45deg, #2c3e50, #3498db);
+    transform: translateY(-2px);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .tab-btn {
+        margin: 0.2rem;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active class to clicked button
+    if (tabName === 'favorites') {
+        document.getElementById('favoritesTab').classList.add('active');
+    } else if (tabName === 'allbooks') {
+        document.getElementById('allbooksTab').classList.add('active');
+    }
+}
+
+// Initialize with favorites tab active
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('favorites');
+});
+</script>
+{% endblock %}
+{% endblock %}

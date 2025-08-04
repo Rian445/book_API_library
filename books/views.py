@@ -3,14 +3,23 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from rest_framework import generics
-from .models import Book, Author, Comment
+from .models import Book, Author, Comment, Favorite
 from .serializers import BookSerializer
 from .forms import CustomUserCreationForm, LoginForm, CommentForm
 
 
 def home(request):
+    
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            return redirect('books:admin_dashboard')
+        else:
+            return redirect('books:user_dashboard')
+
+    # For anonymous users - show public home page
     books_list = Book.objects.all().prefetch_related('authors')
 
     paginator = Paginator(books_list, 10)
@@ -44,6 +53,11 @@ def book_detail(request, book_id):
 
     comments = Comment.objects.filter(book=book).select_related('user')
 
+    # Check if book is in user's favorites
+    is_favorite = False
+    if request.user.is_authenticated and not request.user.is_staff:
+        is_favorite = Favorite.objects.filter(user=request.user, book=book).exists()
+
     comment_form = None
     if request.user.is_authenticated:
         if request.method == 'POST':
@@ -63,6 +77,7 @@ def book_detail(request, book_id):
         'related_books': related_books,
         'comments': comments,
         'comment_form': comment_form,
+        'is_favorite': is_favorite,
     }
 
     return render(request, 'books/book_detail.html', context)
@@ -185,3 +200,98 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('books:home')
+
+
+def user_dashboard(request):
+    
+    if not request.user.is_authenticated:
+        return redirect('books:login')
+
+    if request.user.is_staff:
+        return redirect('books:admin_dashboard')
+
+    
+    favorite_books = Book.objects.filter(
+        favorited_by__user=request.user
+    ).prefetch_related('authors').order_by('-favorited_by__created_at')
+
+    
+    all_books_list = Book.objects.all().prefetch_related('authors')
+    paginator = Paginator(all_books_list, 12)
+    page_number = request.GET.get('page')
+    all_books = paginator.get_page(page_number)
+
+    context = {
+        'user': request.user,
+        'favorite_books': favorite_books,
+        'all_books': all_books,
+        'total_favorites': favorite_books.count(),
+        'total_books': Book.objects.count(),
+        'is_paginated': all_books.has_other_pages(),
+        'page_obj': all_books,
+    }
+
+    return render(request, 'books/user_dashboard.html', context)
+
+
+def admin_dashboard(request):
+   
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('books:home')
+
+    
+    total_books = Book.objects.count()
+    total_authors = Author.objects.count()
+    total_users = User.objects.count()
+    total_comments = Comment.objects.count()
+
+    
+    recent_books = Book.objects.all().order_by('-created_at')[:5]
+    recent_comments = Comment.objects.all().select_related('user', 'book').order_by('-created_at')[:5]
+
+    context = {
+        'user': request.user,
+        'total_books': total_books,
+        'total_authors': total_authors,
+        'total_users': total_users,
+        'total_comments': total_comments,
+        'recent_books': recent_books,
+        'recent_comments': recent_comments,
+    }
+
+    return render(request, 'books/admin_dashboard.html', context)
+
+
+def all_books(request):
+    
+    books_list = Book.objects.all().prefetch_related('authors')
+
+    paginator = Paginator(books_list, 12)
+    page_number = request.GET.get('page')
+    books = paginator.get_page(page_number)
+
+    context = {
+        'books': books,
+        'total_books': Book.objects.count(),
+        'is_paginated': books.has_other_pages(),
+        'page_obj': books,
+    }
+
+    return render(request, 'books/all_books.html', context)
+
+
+@login_required
+def toggle_favorite(request, book_id):
+    book = get_object_or_404(Book, id=book_id)
+    favorite, created = Favorite.objects.get_or_create(
+        user=request.user,
+        book=book
+    )
+
+    if created:
+        messages.success(request, f'"{book.title}" added to your favorites!')
+    else:
+        favorite.delete()
+        messages.success(request, f'"{book.title}" removed from your favorites!')
+
+    return redirect('books:book_detail', book_id=book_id)
